@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lung Cancer Detection</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        #imagePreview {
+            max-height: 300px;
+            margin-top: 20px;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        #imageUpload {
+            margin: 20px 0;
+        }
+        #label-container {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        .prediction-label {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Lung Cancer Detection</h1><br>
+    <h4>Lung Cancer CT Scans: Normal, Benign, and Malignant Cases</h4>
+    <input id="imageUpload" type="file" accept="image/*" />
+    <img id="imagePreview" />
+    <div id="label-container"></div>
+
+    <script type="text/javascript">
+        // More API functions here:
+        // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/image
+
+        // the link to your model provided by Teachable Machine export panel
+        const URL = 'https://teachablemachine.withgoogle.com/models/oip1RPXVu/';
+
+        let model, labelContainer, maxPredictions;
+
+        // Load the image model
+        async function init() {
+            const modelURL = URL + 'model.json';
+            const metadataURL = URL + 'metadata.json';
+
+            // load the model and metadata
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
+            labelContainer = document.getElementById('label-container');
+            for (let i = 0; i < maxPredictions; i++) {
+                // and class labels
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'prediction-label';
+                labelContainer.appendChild(labelDiv);
+            }
+        }
+
+        async function predict() {
+            // predict can take in an image, video or canvas html element
+            var image = document.getElementById('imagePreview');
+            const prediction = await model.predict(image, false);
+            for (let i = 0; i < maxPredictions; i++) {
+                let probability = prediction[i].probability.toFixed(2);
+                if (probability === '1.00') {
+                    probability = '100.00';
+                }
+                const classPrediction =
+                    prediction[i].className + ': ' + probability + '%';
+                labelContainer.childNodes[i].innerHTML = classPrediction;
+            }
+        }
+    </script>
+
+    <script type="text/javascript">
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    $('#imagePreview').attr('src', e.target.result);
+                    $('#imagePreview').hide();
+                    $('#imagePreview').fadeIn(650);
+                };
+                reader.readAsDataURL(input.files[0]);
+                init().then(() => {
+                    predict();
+                });
+            }
+        }
+
+        $('#imageUpload').change(function () {
+            readURL(this);
+        });
+    </script>
+</body>
+</html>
